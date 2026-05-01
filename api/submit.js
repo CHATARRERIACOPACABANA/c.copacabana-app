@@ -30,34 +30,25 @@ async function uploadFileToDrive(auth, b64, mime, nombre, folderId) {
   if (!b64 || b64.length < 10) return '';
 
   try {
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyiXJgoVRx6uwah1OOBZYQK8A3ftK1pZifp00ga1rJ08v2SLM0QTJByBh9a1wYWevrP/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzi7zNfQfI72k9luCxYZxU1My9_dJXKNRx6oyfM3LWlm6N14B0Hk_jWQNNUNVghbcOX/exec';
+const response = await fetch(APPS_SCRIPT_URL, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    tipo: 'subirFoto',
+    base64: b64,
+    mime: mime || 'image/jpeg',
+    nombre,
+    folderId
+  })
+});
 
-    const response = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tipo: 'subirFoto',
-        base64: b64,
-        mime: mime || 'image/jpeg',
-        nombre,
-        folderId
-      })
-    });
+const result = await response.json();
 
-const text = await response.text();
-let result;
+if (result.ok) return result.url || '';
 
-try {
-  result = JSON.parse(text);
-} catch (e) {
-  console.error("Respuesta no es JSON:", text);
-  return 'Error: Apps Script no respondió correctamente';
-}
-
-    if (result.ok) return result.url || '';
-
-    return 'Error: ' + (result.error || 'No se pudo subir la foto');
-
+return 'Error: ' + (result.error || 'No se pudo subir la foto');
+    
   } catch (e) {
     console.error('Drive upload error:', e.message);
     return 'Error: ' + e.message;
