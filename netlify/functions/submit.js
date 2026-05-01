@@ -100,7 +100,14 @@ exports.handler = async (event) => {
   }
 
   try {
-    const datos = JSON.parse(event.body);
+    let bodyStr = event.body;
+    if (event.isBase64Encoded) {
+      bodyStr = Buffer.from(bodyStr, 'base64').toString('utf8');
+    }
+    if (!bodyStr || bodyStr.trim() === '') {
+      return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: 'Empty body' }) };
+    }
+    const datos = typeof bodyStr === 'string' ? JSON.parse(bodyStr) : bodyStr;
     const auth = await getAuth();
     
     const now = new Date();
