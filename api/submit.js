@@ -28,21 +28,28 @@ async function getAuth() {
 
 async function uploadFileToDrive(auth, b64, mime, nombre, folderId) {
   if (!b64 || b64.length < 10) return '';
+
   try {
-    const drive = google.drive({ version: 'v3', auth });
-    const buffer = Buffer.from(b64, 'base64');
-    const { Readable } = require('stream');
-    const stream = Readable.from(buffer);
-    const res = await drive.files.create({
-      requestBody: { name: nombre, parents: [folderId] },
-      media: { mimeType: mime || 'image/jpeg', body: stream },
-      fields: 'id,webViewLink'
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyiXJgoVRx6uwah1OOBZYQK8A3ftK1pZifp00ga1rJ08v2SLM0QTJByBh9a1wYWevrP/exec';
+
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        tipo: 'subirFoto',
+        base64: b64,
+        mime: mime || 'image/jpeg',
+        nombre,
+        folderId
+      })
     });
-    await drive.permissions.create({
-      fileId: res.data.id,
-      requestBody: { role: 'reader', type: 'anyone' }
-    });
-    return res.data.webViewLink || '';
+
+    const result = await response.json();
+
+    if (result.ok) return result.url || '';
+
+    return 'Error: ' + (result.error || 'No se pudo subir la foto');
+
   } catch (e) {
     console.error('Drive upload error:', e.message);
     return 'Error: ' + e.message;
