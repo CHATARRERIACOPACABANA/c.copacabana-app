@@ -44,7 +44,15 @@ async function uploadFileToDrive(auth, b64, mime, nombre, folderId) {
       })
     });
 
-    const result = await response.json();
+const text = await response.text();
+let result;
+
+try {
+  result = JSON.parse(text);
+} catch (e) {
+  console.error("Respuesta no es JSON:", text);
+  return 'Error: Apps Script no respondió correctamente';
+}
 
     if (result.ok) return result.url || '';
 
